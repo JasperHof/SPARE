@@ -1,0 +1,13 @@
+exportPattern("^[[:alpha:]]+")
+
+import(stats)
+import(bigsnpr)
+import(utils)
+import(coxme)
+import(RSQLite)
+import(seqminer)
+import(survival)
+import(data.table)
+import(dplyr)
+
+#importFrom('stats', 'bigsnpr', 'utils', 'coxme', 'RSQLite', 'seqminer','survival','data.table','dplyr')

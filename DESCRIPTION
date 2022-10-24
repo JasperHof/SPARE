@@ -1,0 +1,11 @@
+Package: SPARE
+Type: Package
+Title: Saddlepoint approximation for recurrent events for GWAS
+Version: 0.1.0
+Author: Jasper Hof
+Imports: stats, bigsnpr, utils, coxme, RSQLite, seqminer, survival, data.table, dplyr
+Maintainer: Jasper Hof <Jasper.Hof@radboudumc.nl>
+Description: Saddlepoint approximation for recurrent events for GWAS
+License: None
+Encoding: UTF-8
+LazyData: true
