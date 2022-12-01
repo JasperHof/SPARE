@@ -1,6 +1,6 @@
 # SPARE
 
-The SPARE package enables recurrent event analysis for GWAS. SPARE applies a saddle-point approximation to achieve statistical accuracy for low-frequency variants. 
+The SPARE package enables recurrent event analysis for GWAS. SPARE applies a saddlepoint approximation to achieve statistical accuracy for low-frequency variants. 
 
 The software can be downloaded in R by:
 ```
