@@ -26,7 +26,7 @@ MGres_ph(
 The data frame should include the samples under column name 'subjects'.
 }
 \value{
-    A numeric vector containing outcome martingale residuals for all subjects
+    An object containing: (i) martingale residuals for all subjects; (ii) cumulative hazards for all subjects, and (iii) the frailty variance of the null model. The latter two are used for computing the approximate hazard ratios in SPARE.
 }
 \references{
 %% ~put references to the literature/web site here ~

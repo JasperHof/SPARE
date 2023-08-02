@@ -12,15 +12,27 @@ library(seqminer)
 
 MGres_ph <- function (fitph = NULL, data = NULL)
 {
-  if(is.null(fitph)) stop('no coxph object included')
-  if(!'coxph' %in% class(fitph)) stop('object not of class coxph')
-  if(is.null(data)) stop('no data object included')
-  if(!'subject' %in% colnames(data)) stop('please include individuals as "subject" in dataframe')
-  if(length(grep('subject',attr(fitph$terms,'term.labels'))) < 1) warning('subject not included as frailty')
-
+  if (is.null(fitph))  stop("no coxph object included")
+  if (!"coxph" %in% class(fitph)) stop("object not of class coxph")
+  if (is.null(data))  stop("no data object included")
+  if (!"subject" %in% colnames(data))  stop("please include individuals as \"subject\" in dataframe")
+  if (length(grep("subject", attr(fitph$terms, "term.labels"))) < 1)  warning("subject not included as frailty")
   mgres = rowsum(fitph$residuals, data$subject)
   mgres = mgres[match(unique(data$subject), rownames(mgres)),]
-  return(mgres)
+
+  count = rep(0,length(unique(data$subject)))
+  for(i in 1:length(count)){
+    count[i] = sum(as.matrix(fitph$y[which(data$subject == unique(data$subject)[i]),3]))
+  }
+
+  cumhaz = count - mgres
+
+  names(mgres) = unique(data$subject)
+  names(cumhaz) = unique(data$subject)
+
+  object = list(resids = mgres, cumhaz = cumhaz, frail = as.numeric(unlist(fitph$history)[1]))
+
+  return(object)
 }
 
 MGres <- function (fitme = NULL, data = NULL)
@@ -94,16 +106,18 @@ MGres <- function (fitme = NULL, data = NULL)
   }
   individual_prop_haz = rep(0, length(unique(data$subject)))
   count = rep(0, length(unique(data$subject)))
-
   for (i in 1:length(unique(data$subject))) {
     set = which(data$subject == unique(data$subject)[i])
     count[i] = sum(events$status[set] == 1)
   }
-
-  ### Compute martingale residuals as `observed events` - `individual cumulative hazard` (lambda)
   resids = count - cumhaz
+
   names(resids) = unique(data$subject)
-  return(resids)
+  names(cumhaz) = unique(data$subject)
+
+  object = list(resids = resids, cumhaz = cumhaz, frail = as.numeric(fitme$vcoef))
+
+  return(object)
 }
 
 #
@@ -118,9 +132,23 @@ Null_model <- function(fitme,
 {
   Call = match.call()
 
-  ### Compute martingale residuals
-  if('coxme' %in% class(fitme)) mresid = MGres(fitme, data)
-  if('coxph' %in% class(fitme)) mresid = MGres_ph(fitme, data)
+  # Compute martingale residuals and cumulative hazards
+  if ("coxme" %in% class(fitme)){
+
+    MG = MGres(fitme, data)
+
+    mresid = MG$resids
+    cumhaz = MG$cumhaz
+    frail = MG$frail
+  }
+  if ("coxph" %in% class(fitme)){
+
+    MG = MGres_ph(fitme, data)
+
+    mresid = MG$resids
+    cumhaz = MG$cumhaz
+    frail = MG$frail
+  }
 
   ### Check input arguments
   obj.check = check_input(data, IDs, mresid, range)
@@ -234,47 +262,57 @@ SPARE = function(obj.null,
   ### Prepare the output file
   b = as.numeric(b); error = as.numeric(error)
 
+  # Compute approximate Hazard Ratio
+  HR = rep(NA, length(b))
+  for(i in 1:length(HR)){
+    HR[i] = Beta_to_HR(b[i], G[,i], mresid, obj.null$cumhaz, obj.null$frail)
+  }
+
   outcome = cbind(SNP = colnames(G), MAF = colMeans(G)/2, Missing = colSums(is.na(G)),
-                  pSPA = pval.mg, pMG = pval.mg, Beta = b, SE = error, Z = b / error)
+                  pSPA = pval.mg, pMG = pval.mg, log_HR_approx = HR ,Beta = b, SE = error,
+                  Z = b/error)
   outcome = as.data.frame(outcome, stringsAsFactors = F)
-
-  outcome = transform(outcome, Beta = as.numeric(Beta), pMG = as.numeric(pMG), pSPA = as.numeric(pSPA),
-                      SE = as.numeric(SE), Z = as.numeric(Z), MAF = as.numeric(MAF), Missing = as.integer(Missing))
+  outcome = transform(outcome, Beta = as.numeric(Beta), log_HR_approx = as.numeric(log_HR_approx), pMG = as.numeric(pMG),
+                      pSPA = as.numeric(pSPA), SE = as.numeric(SE), Z = as.numeric(Z),
+                      MAF = as.numeric(MAF), Missing = as.integer(Missing))
   rownames(outcome) = NULL
-
-  #
-  # ------ use SPA for SNPs with P value below cut-off point ------
-  #
-
   low.p = which(pval.mg < p.cutoff)
 
-  for(i in low.p){
-    g = G[,i]
+  # Perform SPA for SNPs with low P values
+  for (i in low.p) {
+    g = G[, i]
     g = g - mean(g)
-
-    s = sum(g * MG)/sum(g^2)             # Statistic
-
-    k0 = function(x) sum(obj.null$K_org_emp(g/sum(g^2) * x))
-    k1 = function(x) sum(g/sum(g^2) * obj.null$K_1_emp(g/sum(g^2) * x))
-    k2 = function(x) sum((g/sum(g^2))^2 * obj.null$K_2_emp(g/sum(g^2) * x))
-
-    get_p = function(s, tail){
+    s = sum(g * MG)/sum(g^2)
+    k0 = function(x) sum(obj.null$K_org_emp(g/sum(g^2) *
+                                              x))
+    k1 = function(x) sum(g/sum(g^2) * obj.null$K_1_emp(g/sum(g^2) *
+                                                         x))
+    k2 = function(x) sum((g/sum(g^2))^2 * obj.null$K_2_emp(g/sum(g^2) *
+                                                             x))
+    get_p = function(s, tail) {
       k1_root = function(x) k1(x) - s
-      zeta = uniroot(k1_root, c(-2000,2000))$root
-
+      zeta = uniroot(k1_root, c(-2000, 2000))$root
       w = sign(zeta) * sqrt(2 * (zeta * s - k0(zeta)))
       v = zeta * sqrt(k2(zeta))
-
       pval = pnorm(w + 1/w * log(v/w), lower.tail = tail)
       return(pval)
     }
-
     p_SPA = get_p(abs(s), tail = F) + get_p(-abs(s), tail = T)
     outcome$pSPA[i] = p_SPA
   }
 
-  print(paste0("SPARE completed at ",Sys.time()))
+  # Compute SPA - corrected standard errors. Effects have to be slightly way from the null to avoid dividing by 0
+  SNP_set = which(outcome$pMG < 0.75)
+  SE2 = outcome$SE
+  SE2[SNP_set] = sqrt(outcome$Beta[SNP_set]^2 / qchisq(outcome$pSPA[SNP_set],df=1, lower.tail = F))
 
+  # Compute (SPA - corrected) standard errors for the approximate HRs
+  log_HR_approx_SE = outcome$SE * (outcome$log_HR_approx / outcome$Beta)
+  log_HR_approx_SE2 = SE2 * (outcome$log_HR_approx / outcome$Beta)
+
+  outcome = cbind(outcome, SE2, log_HR_approx_SE, log_HR_approx_SE2)
+
+  print(paste0("SPARE completed at ", Sys.time()))
   return(outcome)
 }
 
@@ -529,6 +567,16 @@ MGres_check = function(fitme, data){
   } else {
     strats = rep(0, dim(data)[1])
   }
+}
+
+#
+# Function for converting score statistics to Hazard Ratios
+#
+
+Beta_to_HR = function(beta, g, resids, cumhaz, frail){
+  constant = sum(g^2 * cumhaz/(frail * cumhaz + 1))/sum(g^2)
+  HR = beta/constant
+  return(HR)
 }
 
 #

@@ -97,6 +97,18 @@ The output file contains a matrix with the following columns
 \item{Missing}{
   Fraction of missing SNPs
 }
+\item{log_HR_approx}{
+  Approximate log hazard ratio of SNP
+}
+\item{SE2}{
+  Standard error of test statistic, corrected using the SPA-based P value
+}
+\item{log_HR_approx_SE}{
+  Standard error of log hazard ratio
+}
+\item{log_HR_approx_SE2}{
+  SPA-corrected standard error of log hazard ratio
+}
 }
 \references{
 %% ~put references to the literature/web site here ~
