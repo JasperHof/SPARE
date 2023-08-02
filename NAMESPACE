@@ -8,6 +8,7 @@ import(RSQLite)
 import(seqminer)
 import(survival)
 import(data.table)
-import(dplyr)
+importFrom(dplyr, collect)
+importFrom(dplyr, tbl)
 
 #importFrom('stats', 'bigsnpr', 'utils', 'coxme', 'RSQLite', 'seqminer','survival','data.table','dplyr')
