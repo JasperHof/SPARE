@@ -178,12 +178,8 @@ Null_model <- function(fitme,
   K_1_emp = approxfun(cumul[,1], cumul[,3], rule=2)
   K_2_emp = approxfun(cumul[,1], cumul[,4], rule=2)
 
-  re=list(resid = mresid,
-          K_org_emp = K_org_emp,
-          K_1_emp = K_1_emp,
-          K_2_emp = K_2_emp,
-          Call = Call,
-          IDs = IDs)
+  re = list(resid = mresid, cumhaz = cumhaz, frail = frail, K_org_emp = K_org_emp, K_1_emp = K_1_emp,
+            K_2_emp = K_2_emp, Call = Call, IDs = IDs)
 
   class(re)<-"NULL_Model"
   return(re)
