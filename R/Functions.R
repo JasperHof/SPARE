@@ -42,6 +42,7 @@ MGres <- function (fitme = NULL, data = NULL)
   ### Find the strata included in the coxme fit
   check_strat = strsplit(as.character(fitme$formulaList$fixed)[3],
                          "strata")[[1]]
+
   if (length(check_strat) > 1) {
     name = substring(strsplit(check_strat[2], ")")[[1]][1],
                      2)
