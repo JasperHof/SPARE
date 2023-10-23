@@ -289,11 +289,27 @@ SPARE = function(obj.null,
                                                              x))
     get_p = function(s, tail) {
       k1_root = function(x) k1(x) - s
-      zeta = uniroot(k1_root, c(-2000, 2000))$root
+
+      zeta <- tryCatch(
+        # First try domain (-2000,2000), then (-20000,20000), otherwise return p values NA
+        uniroot(k1_root, c(-2000, 2000))$root,
+        error = function(e) {
+          result <- tryCatch(
+            uniroot(k1_root, c(-20000, 20000))$root,
+            error = function(e2) {
+              # Set zeta to NA
+              NA
+            }
+          )
+          if (!inherits(result, "error")) result  # Check if an error occurred in the second attempt
+        }
+      )
+
       w = sign(zeta) * sqrt(2 * (zeta * s - k0(zeta)))
       v = zeta * sqrt(k2(zeta))
       pval = pnorm(w + 1/w * log(v/w), lower.tail = tail)
       return(pval)
+
     }
     p_SPA = get_p(abs(s), tail = F) + get_p(-abs(s), tail = T)
     outcome$pSPA[i] = p_SPA

@@ -5,7 +5,7 @@
   Compute martingale residuals and implement saddle-point approximation
 }
 \description{
-  Computes martingale residuals based on a specified coxme null model, and computes a saddle-point approximation for the distribution of regression coefficients in LRM
+  First computes martingale residuals based on a null model, then computes a saddle-point approximation for the distribution of score statistics in SPARE
 }
 \usage{
 Null_model(

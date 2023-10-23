@@ -66,6 +66,8 @@ SPARE.bgen(
 To run SPARE for .bgen files, the user should first fit a null model based on the phenotype data. This null model computes martingale residuals, and subsequently the distribution of martingale residuals is empirically estimated using a the saddle-point approximation.
 
 After computing the null model, SPARE.bgen() computes association statistics between SNPs in the .bed file and martingale residuals.
+
+Note: The SPARE.bgen function relies on the bigsnpr package for loading genotype data. In case of possible errors, make sure to check the bignspr documentation.
 }
 
 \value{
