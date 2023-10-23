@@ -17,6 +17,7 @@ MGres_ph <- function (fitph = NULL, data = NULL)
   if (is.null(data))  stop("no data object included")
   if (!"subject" %in% colnames(data))  stop("please include individuals as \"subject\" in dataframe")
   if (length(grep("subject", attr(fitph$terms, "term.labels"))) < 1)  warning("subject not included as frailty")
+
   mgres = rowsum(fitph$residuals, data$subject)
   mgres = mgres[match(unique(data$subject), rownames(mgres)),]
 
