@@ -10,29 +10,25 @@ library(seqminer)
 #
 #
 
-MGres_ph <- function (fitph = NULL, data = NULL)
-{
-  if (is.null(fitph))  stop("no coxph object included")
+MGres_ph =  function (fitph = NULL, data = NULL)   {
+  if (is.null(fitph)) stop("no coxph object included")
   if (!"coxph" %in% class(fitph)) stop("object not of class coxph")
-  if (is.null(data))  stop("no data object included")
-  if (!"subject" %in% colnames(data))  stop("please include individuals as \"subject\" in dataframe")
+  if (is.null(data)) stop("no data object included")
+  if (!"subject" %in% colnames(data)) stop("please include individuals as \"subject\" in dataframe")
   if (length(grep("subject", attr(fitph$terms, "term.labels"))) < 1)  warning("subject not included as frailty")
 
+  if(!is.null(fitph$na.action))  data = data[-fitph$na.action,]
   mgres = rowsum(fitph$residuals, data$subject)
   mgres = mgres[match(unique(data$subject), rownames(mgres)),]
 
-  count = rep(0,length(unique(data$subject)))
-  for(i in 1:length(count)){
-    count[i] = sum(as.matrix(fitph$y[which(data$subject == unique(data$subject)[i]),3]))
+  count = rep(0, length(unique(data$subject)))
+  for (i in 1:length(count)) {
+    count[i] = sum(as.matrix(fitph$y[which(data$subject == unique(data$subject)[i]), 3]))
   }
-
   cumhaz = count - mgres
-
   names(mgres) = unique(data$subject)
   names(cumhaz) = unique(data$subject)
-
   object = list(resids = mgres, cumhaz = cumhaz, frail = as.numeric(unlist(fitph$history)[1]))
-
   return(object)
 }
 
@@ -543,7 +539,7 @@ check_input = function(data, IDs, mresid, range)
   IDs = as.character(IDs)
 
   if(any(!is.element(IDs, data$subject)))
-    stop("All elements in IDs should be also in data as 'subject'")
+    warning("All elements in IDs should be also in data as 'subject'")
 
   if(anyDuplicated(IDs)!=0)
     stop("Argument 'IDs' should not have a duplicated element.")
@@ -552,7 +548,7 @@ check_input = function(data, IDs, mresid, range)
     stop("range[2] should be -1*range[1]")
 
   if(length(mresid)!=length(IDs))
-    stop("length(mresid)!=length(IDs) where mresid are the martingale residuals.")
+    warning("length(mresid)!=length(IDs) where mresid are the martingale residuals.")
 
 }
 
