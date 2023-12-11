@@ -23,7 +23,7 @@ MGres_ph =  function (fitph = NULL, data = NULL)   {
 
   count = rep(0, length(unique(data$subject)))
   for (i in 1:length(count)) {
-    count[i] = sum(as.matrix(fitph$y[which(data$subject == unique(data$subject)[i]), 3]))
+    count[i] = sum(as.data.frame(as.matrix(fitph$y))$status[which(data$subject == unique(data$subject)[i])])
   }
   cumhaz = count - mgres
   names(mgres) = unique(data$subject)
