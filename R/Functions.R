@@ -217,16 +217,20 @@ SPARE = function(obj.null,
   Geno.mtx = Geno.mtx[which(rownames(Geno.mtx) %in% Complete),]
 
   ### Filter on call rate, minor allele frequency, and match entries of genotype and phenotype
-  Geno.mtx[Geno.mtx == -9] = NA                  # for plink input
+  if(any(Geno.mtx == -9)) Geno.mtx[Geno.mtx == -9] = NA                  # for plink input
+
   SNP.callrate = colMeans(is.na(Geno.mtx))
   if(any(SNP.callrate > missing.cutoff)){ Geno.mtx = Geno.mtx[,-which(SNP.callrate > missing.cutoff)] }
 
   No_Geno <- is.na(Geno.mtx)
   Geno.mtx = na_mean(Geno.mtx)                # Impute missing values to mean for estimating MAF
 
+  print(paste0(dim(Geno.mtx)[2], "SNPs remaining after call threshold ", Sys.time()))
+
   G = Geno.mtx[,which(colMeans(Geno.mtx) > 2*min.maf & colMeans(Geno.mtx) < 2*(1 - min.maf))]
   No_Geno = No_Geno[,which(colMeans(Geno.mtx) > 2*min.maf & colMeans(Geno.mtx) < 2*(1 - min.maf))]  # Also update the No_geno matrix
 
+  if(is.null(dim(G))) return(NULL)               # No SNPs left after QC
   if(dim(G)[2] == 0) return(NULL)               # No SNPs left after QC
 
   mresid = mresid[which(names(mresid) %in% Complete)]
